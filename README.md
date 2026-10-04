@@ -65,12 +65,56 @@ The platform (I haven't chosen a name yet) brings together shops that sell handm
 
 ## Routes
 
-### Admin Routes 
+### Accounts and stores
 
-### Authentication Routes
 
-### Store Routes
 
-### Product Routes
+| Method    | Path                        | Purpose                                                                    |
+| --------- | --------------------------- | -------------------------------------------------------------------------- |
+| POST      | `/auth/sign-up`             | Create a Buyer or Seller account                   |
+| POST      | `/auth/sign-in`             | Sign in with username, password, and selected role; return user and token. |
+| GET / PUT | `/auth/me`                  | Read the current account or update personal details.                       |
+| GET       | `/stores`                   | List publicly available stores.                                            |
+| GET       | `/stores/mine`              | Read the current seller's store, or `null` before setup.                    |
+| GET       | `/stores/:id`               | Read an approved store and its products.                                   |
+| POST      | `/stores`                   | Create a new store for the seller.                                         |
+| PUT       | `/stores/:id`               | Save store changes and return to Pending status.                           |
+| PUT       | `/stores/:id/review`        | Admin decision with `status` and `reviewReason`.                           |
+| DELETE    | `/stores/:id`               | Delete the owned store only when it has no products.                       |
 
-### Order Routes
+
+### Products and orders
+
+
+| Method    | Path                                | Purpose                                                                    |
+| --------- | ----------------------------------- | -------------------------------------------------------------------------- |
+| GET/POST  | `/productsp`                        |Public approved list of products / or create a seller draft product.        |
+| GET       | `/products/mine, /products/mine/:id`| Seller list and private product detail.                                    |
+| GET       | `/products/review, /products/review/:id`| Admin list and private product detail.                                 |
+| GET       | `/products/purchases`               | Current buyer's purchase history.                                          |
+| GET       | `/products/favorites`               | Current buyer's favorites; hidden products return an unavailable entry.    |
+| GET/ PUT / DELETE| `/products/:id`              | Public detail / owner edit / delete an unused unpublished product.         |
+| POST      | `/products/:id/submit`              | Submit a draft or rejected product for review.                             |
+| POST      | `/products/:id/cancel`              | Cancel a published product.                                                |
+| POST      | `/products/:id/complete`            | Complete a fulfilled product order with sales record.                      |
+| PUT       | `/products/:id/review`              | Admin decision with `status` and `reviewReason`.                           |
+| GET/POST  | `/products/:id/orders`              |PStore orders / place a new purchase order for the product.                 |
+| DELETE    | `//products/:id/orders/me`          |Cancel the current buyer's purchase order.                                  |
+| PUT       | `/products/:id/orders/:buyerId`     |Update order or fulfillment status.                                         |
+| PUT / DELETE| `/products/:id/favorite`          |Save / remove a product favorite.                                           |
+| POST      | `/uploads`                          |Seller image upload as multipart field `image`; returns `{ url, publicId }`.    |
+
+
+
+
+
+### Store updates
+
+
+| Method    | Path                           | Purpose                                                                       |
+| --------- | ------------------------------ | ----------------------------------------------------------------------------- |
+| GET       | `/stores/:id/updates`          | Public newest-first updates when store and owner are Approved.                |
+| GET       | `/stores/mine/:id/updates`     | Owning seller's updates in every store status.                                |
+| POST      | `/stores/:id/updates`          | Owner creates an update with `{ text }`; ownership IDs come from the server.  |
+| PUT       | `/stores/:id/updates/:updateId`| Owning author edits an update's text.                                         |
+| DELETE    | `/stores/:id/updates/:updateId`| Owning author removes an update.                                              |
