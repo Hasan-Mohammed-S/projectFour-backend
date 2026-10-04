@@ -56,7 +56,7 @@ The platform (I haven't chosen a name yet) brings together shops that sell handm
 
 
 
-Entity relationship diagrams (ERDs)
+## Entity relationship diagrams (ERDs)
 
 ![Current collection relationships](imgs/ERD.png)
 
