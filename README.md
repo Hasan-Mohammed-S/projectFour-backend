@@ -59,3 +59,15 @@ The platform (I haven't chosen a name yet) brings together shops that sell handm
 Entity relationship diagrams (ERDs)
 
 ![Current collection relationships](imgs/ERD.png)
+
+
+
+
+## Routes
+
+
+### Admin Routes 
+### Authentication Routes
+### Store Routes
+### Product Routes
+### Order Routes
