@@ -1,16 +1,21 @@
-# React + Vite
+## 1.user stories
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+### Visitors
 
-Currently, two official plugins are available:
+| ID  | User story                                                                                                                                       |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| U01 | As a visitor, I would like to browse the available stores to find the product I want.                      |
+| U02 | As a visitor, I would like to filter products by type and price so that I can find what suits me.                       |
+| U03 |As a visitor, I would like to view the product images, price, and description so that I can see the important details. |
+| U04 |As a visitor, I would like to create a store or buyer account so that I can use the platform. |
+| U05 | As a user, I want to sign in and sign out so that I can securely access my account.                                                              |
+| U06 |As a user, I would like to edit my name, phone number, and other details to ensure the accuracy of my profile.                                                        |
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+### Buyer
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+| ID  | User story                                                                                                                  |
+| --- | --------------------------------------------------------------------------------------------------------------------------- |
+| B01 | As a buyer, I would like to view all information about the store and its products so that I can see what is currently available and what custom products I can order.                   |
+| B02 | As a buyer, I want to add products to the cart so I can review them and remove anything I don't want before completing the order.                     |
+| B03 | As a buyer, I would like to view my current and past orders so that I can see everything I have ordered.                        |
+| B04 | As a buyer, I would like to receive invoices so I can know the value of my purchases from stores.                   |
