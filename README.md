@@ -1,3 +1,11 @@
+
+#  I haven't chosen a name yet
+
+
+The platform (I haven't chosen a name yet) brings together shops that sell handmade items—such as wedding favors, *Nasfa* treats, gifts for welcoming newborns, artwork, and other handcrafted goods—making it easier for buyers to find them without having to spend a long time searching on social media.
+
+
+
 ## 1.user stories
 
 ### Visitors
