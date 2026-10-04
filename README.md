@@ -35,3 +35,12 @@
 | S06 | As a store owner, I would like to delete products when they go out of stock, provided I do not intend to restock them in the future.                        |
 | S07 | As an organizer, I would like to view the list of buyer orders from my account.                    |
 | S08 | As a store owner , I would like to obtain all the buyer's details and address so that I can deliver the order.                |
+
+
+### Admins
+
+| ID  | User story                                                                                                                       |
+| --- | -------------------------------------------------------------------------------------------------------------------------------- |
+| A01 | As an admin, I would like to view information about the stores—specifically their details and logos—so that I can identify the stores using the site for sales.    |
+| A02 | As an admin, I would like to review the details regarding the number of users—specifically the number of stores and buyers—and view their data. |
+| A03 | As an admin, I would like to remove stores that have recurring complaints, or buyers with recurring complaints, from the Owner Stores.           |
