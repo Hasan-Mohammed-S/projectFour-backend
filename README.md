@@ -65,9 +65,12 @@ Entity relationship diagrams (ERDs)
 
 ## Routes
 
-
 ### Admin Routes 
+
 ### Authentication Routes
+
 ### Store Routes
+
 ### Product Routes
+
 ### Order Routes
