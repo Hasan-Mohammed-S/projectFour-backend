@@ -52,3 +52,10 @@ The platform (I haven't chosen a name yet) brings together shops that sell handm
 | A01 | As an admin, I would like to view information about the stores—specifically their details and logos—so that I can identify the stores using the site for sales.    |
 | A02 | As an admin, I would like to review the details regarding the number of users—specifically the number of stores and buyers—and view their data. |
 | A03 | As an admin, I would like to remove stores that have recurring complaints, or buyers with recurring complaints, from the Owner Stores.           |
+
+
+
+
+Entity relationship diagrams (ERDs)
+
+![Current collection relationships](imgs/ERD.png)
