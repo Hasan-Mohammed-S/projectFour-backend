@@ -1,29 +1,41 @@
+/* eslint-disable prefer-destructuring */
 require('dotenv').config();
+require('./config/database');
+
 const express = require('express');
-const morgan = require('morgan');
-const methodOverride = require('method-override');
 
 const app = express();
 
 // Middleware
-app.use(express.urlencoded({ extended: false }));
-app.use(methodOverride('_method'));
-app.use(morgan('dev'));
+const cors = require('cors');
+const logger = require('morgan');
+const isSignedIn = require('./middleware/isSignedIn');
 
-// Database Connection
-const mongoose = require('mongoose');
+// Routers
+const authRouter = require('./routes/authRouter');
 
-mongoose.connect(process.env.MONGODB_URI);
+app.use(cors());
+app.use(express.json());
+app.use(logger('dev'));
 
-mongoose.connection.on("connected", () => {
-    console.log(`Connected to MongoDB ${mongoose.connection.name}.`);
-});
+// ROUTES
 
-// Routes
-app.get('/', (req, res) => {
-  res.send('<h1>Hello World</h1>');
+// PUBLIC
+app.use('/auth', authRouter);
+
+// PROTECTED
+app.use(isSignedIn);
+
+app.get('/protected', (req, res) => {
+  try {
+    const userPayload = req.user;
+
+    res.status(200).json({ user: userPayload });
+  } catch (error) {
+    res.status(500).json({ err: 'Something went wrong' });
+  }
 });
 
 app.listen(3000, () => {
-  console.log('Server is running on http://localhost:3000');
+  console.log('The express app is ready!');
 });

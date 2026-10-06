@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 
 
-const authController = require('../controller/authCtrl.js');
+const authController = require('../controllers/authCtrl.js');
 
 router.get('/register', authController.getRegister);
 router.post('/register', authController.postRegister);

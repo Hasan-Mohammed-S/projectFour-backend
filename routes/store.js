@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const storeController = require('../controller/storeCtrl');
+const storeController = require('../controllers/storeCtrl');
 
 router.get('/', storeController.index);
 router.get('/:id', storeController.show);
