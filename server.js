@@ -6,8 +6,7 @@ const app = express();
 
 require('dotenv').config();
 
-const connectDB = require('./config/database');
-
+require('./config/database');
 
 const authRoutes = require('./routes/auth');
 const authRouter = require('./routes/authRouter');
@@ -20,8 +19,6 @@ app.use(morgan('dev'));
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-//connectDB();
 
 
 
