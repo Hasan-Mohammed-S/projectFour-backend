@@ -11,7 +11,7 @@ router.post('/', orderCtrl.create);
 router.get('/', orderCtrl.index);
 router.get('/:id', orderCtrl.show);
 router.put('/:id', orderCtrl.update);
-router.delete('/:id', orderCtrl.delete);
+router.delete('/:id', orderCtrl.destroy);
 
 
 module.exports = router;

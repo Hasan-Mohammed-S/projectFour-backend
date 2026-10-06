@@ -1,6 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const morgan = require('morgan');
 const app = express();
 
 require('dotenv').config();
@@ -15,21 +16,21 @@ const storeRoutes = require('./routes/store');
 const orderRoutes = require('./routes/order');
 const adminRoutes = require('./routes/admin');
 
-
+app.use(morgan('dev'));
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-connectDB();
+//connectDB();
 
 
 
-app.use('/api/auth', authRoutes);
-app.use('/api/authRouter', authRouter);
-app.use('/api/products', productRoutes);
-app.use('/api/stores', storeRoutes);
-app.use('/api/orders', orderRoutes);
-app.use('/api/admin', adminRoutes);
+app.use('/auth', authRoutes);
+// app.use('/authRouter', authRouter);
+app.use('/products', productRoutes);
+app.use('/stores', storeRoutes);
+app.use('/orders', orderRoutes);
+app.use('/admin', adminRoutes);
 
 
 

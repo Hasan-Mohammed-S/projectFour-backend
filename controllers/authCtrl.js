@@ -11,7 +11,7 @@ const signup = async (req, res) => {
 
     const { username, phoneNumber, email, password, role } = req.body;
     if (!username || !phoneNumber || !email || !password) {
-      return res.status(400).json({ error: "Username, phone number, email, and password are required" });
+      return res.status(400).json({ error: "Username, phone number, email, password are required" });
     }
 
 
@@ -124,9 +124,20 @@ const updateProfile = async (req, res) => {
 };
 
 
+
+const logout = async (req, res) => {
+  try {
+    return res.status(200).json({ message: "Successfully logged out" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+
 module.exports = {
   signup,
   login,
   me,
   updateProfile,
+  logout,
 };

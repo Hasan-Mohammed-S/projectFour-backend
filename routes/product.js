@@ -7,10 +7,10 @@ const productCtrl = require('../controllers/productCtrl');
 
 const isSignedIn = require('../middleware/isSignedIn');
 const isSeller = require('../middleware/isSeller');
-const upload = require('../middleware/multer');
+const upload = require('../config/multer');
 
-router.get('/', productCtrl.getAllProducts);
-router.get('/:id', productCtrl.getProductById);
+router.get('/', productCtrl.index);
+router.get('/:id', productCtrl.show);
 
 
 router.post(
@@ -18,7 +18,7 @@ router.post(
   isSignedIn,
   isSeller,
   upload.single('image'),
-  productCtrl.createProduct
+  productCtrl.create
 );
 
 
@@ -28,7 +28,7 @@ router.put(
   isSignedIn,
   isSeller,
   upload.single('image'),
-  productCtrl.updateProduct
+  productCtrl.update
 );
 
 
@@ -36,7 +36,7 @@ router.delete(
   '/:id',
   isSignedIn,
   isSeller,
-  productCtrl.deleteProduct
+  productCtrl.destroy
 );
 
 module.exports = router;

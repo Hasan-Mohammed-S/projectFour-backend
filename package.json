@@ -7,6 +7,7 @@
     "start": "node server.js",
     "dev": "nodemon server.js"
   },
+  "type": "commonjs",
   "dependencies": {
     "bcrypt": "^6.0.0",
     "cors": "^2.8.6",
@@ -17,6 +18,7 @@
     "method-override": "^3.0.0",
     "mongoose": "^9.10.4",
     "morgan": "^1.12.1",
+    "multer": "^2.4.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
   },
@@ -33,7 +35,7 @@
     "vite": "^8.3.0"
   },
   "description": "The platform (I haven't chosen a name yet) brings together shops that sell handmade items—such as wedding favors, *Nasfa* treats, gifts for welcoming newborns, artwork, and other handcrafted goods—making it easier for buyers to find them without having to spend a long time searching on social media.",
-  "main": "eslint.config.js",
+  "main": "server.js",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Hasan-Mohammed-S/projectFour-backend.git"
