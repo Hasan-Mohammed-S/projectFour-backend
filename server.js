@@ -11,7 +11,7 @@ require('./config/database');
 const authRoutes = require('./routes/auth');
 const authRouter = require('./routes/authRouter');
 const productRoutes = require('./routes/product');
-const storeRoutes = require('./routes/store');
+const storeRoutes = require('./routes/stores');
 const orderRoutes = require('./routes/order');
 const adminRoutes = require('./routes/admin');
 
@@ -37,7 +37,7 @@ app.get('/', (req, res) => {
 
 
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
