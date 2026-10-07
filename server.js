@@ -35,6 +35,17 @@ app.get('/', (req, res) => {
   res.json({ message: 'Server is running successfully!' });
 });
 
+app.get('/protected', (req, res) => {
+  try {
+    const userPayload = req.user;
+
+    res.status(200).json({ user: userPayload });
+  } catch (error) {
+    res.status(500).json({ err: 'Something went wrong' });
+  }
+});
+
+
 
 
 const PORT = process.env.PORT || 3000;
