@@ -4,35 +4,28 @@ const User = require("../models/user");
 
 const SALT_ROUNDS = 10;
 
-
 const signup = async (req, res) => {
   try {
-
-
     const { username, phoneNumber, email, password, role } = req.body;
+    
     if (!username || !phoneNumber || !email || !password) {
-      return res.status(400).json({ error: "Username, phone number, email, password are required" });
+      return res.status(400).json({ error: "Username, phone number, email, and password are required" });
     }
-
-
 
     const userRole = role || "buyer";
     if (!["buyer", "seller", "admin"].includes(userRole)) {
       return res.status(400).json({ error: "Choose buyer, seller, or admin" });
     }
 
-
     const existingUser = await User.findOne({ 
       $or: [{ phoneNumber }, { email }, { username }] 
     });
-
 
     if (existingUser) {
       return res.status(409).json({ error: "Username, phone number, or email is already registered" });
     }
 
     const hashedPassword = bcrypt.hashSync(password, SALT_ROUNDS);
-
 
     const user = await User.create({ 
       username, 
@@ -41,14 +34,11 @@ const signup = async (req, res) => {
       password: hashedPassword, 
       role: userRole 
     });
-    
 
     const token = jwt.sign(
       { username: user.username, phoneNumber: user.phoneNumber, email: user.email, role: user.role, _id: user._id },
-      process.env.JWT_SECRET,
+      process.env.JWT_SECRET
     );
-
-
 
     res.status(201).json({ user, token });
   } catch (error) {
@@ -57,28 +47,33 @@ const signup = async (req, res) => {
 };
 
 
-
 const login = async (req, res) => {
   try {
-    const { phoneNumber, password } = req.body;
+    const { identifier, phoneNumber, email, username, password } = req.body;
 
+    const userIdentifier = identifier || phoneNumber || email || username;
 
-    if (!phoneNumber || !password) {
-      return res.status(400).json({ error: "Phone number and password are required" });
+    if (!userIdentifier || !password) {
+      return res.status(400).json({ error: "Username, email, or phone number and password are required" });
     }
 
-    const user = await User.findOne({ phoneNumber });
 
+    const user = await User.findOne({
+      $or: [
+        { username: userIdentifier },
+        { email: userIdentifier },
+        { phoneNumber: userIdentifier }
+      ]
+    });
 
     if (!user || !bcrypt.compareSync(password, user.password)) {
-      return res.status(401).json({ error: "Phone number or password is incorrect" });
+      return res.status(401).json({ error: "Invalid credentials or password" });
     }
 
     const token = jwt.sign(
       { username: user.username, phoneNumber: user.phoneNumber, email: user.email, role: user.role, _id: user._id },
-      process.env.JWT_SECRET,
+      process.env.JWT_SECRET
     );
-
 
     res.json({ user, token });
   } catch (error) {
@@ -101,7 +96,6 @@ const me = async (req, res) => {
     res.status(400).json({ error: error.message });
   }
 };
-
 
 
 const updateProfile = async (req, res) => {
@@ -132,7 +126,6 @@ const logout = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-
 
 module.exports = {
   signup,
