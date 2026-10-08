@@ -1,83 +1,182 @@
 const Product = require('../models/product');
+const Store = require('../models/stores');
+const { objectId, text, number, fail } = require('../services/validation');
+const { uploadImage, discardImage } = require('../services/imageService');
+
+const publicStores = () => {
+  return Store.find({
+    isActive: true,
+    archived: { $ne: true }
+  }).distinct('_id');
+};
 
 const index = async (req, res) => {
-    try {
-        const products = await Product.find({}).populate('store');
-        res.status(200).json(products);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
+  const stores = await publicStores();
+  
+  const filter = {
+    archived: { $ne: true },
+    store: { $in: stores }
+  };
+
+  if (req.query.store) {
+    filter.store = {
+      $in: stores.filter((s) => String(s) === objectId(req.query.store, 'store'))
+    };
+  }
+
+  const products = await Product.find(filter)
+    .populate('store')
+    .sort({ createdAt: -1 });
+
+  res.json(products);
 };
 
+const mine = async (req, res) => {
+  const stores = await Store.find({
+    owner: req.user._id,
+    archived: { $ne: true }
+  }).distinct('_id');
 
+  const products = await Product.find({
+    store: { $in: stores },
+    archived: { $ne: true }
+  })
+    .populate('store')
+    .sort({ createdAt: -1 });
+
+  res.json(products);
+};
 
 const show = async (req, res) => {
-    try {
-        const product = await Product.findById(req.params.id).populate('store');
-        if (!product) {
-            return res.status(404).json({ message: 'Product not found' });
-        }
-        res.status(200).json(product);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
+  const p = await Product.findOne({
+    _id: objectId(req.params.id),
+    archived: { $ne: true }
+  }).populate('store');
+
+  if (!p || !p.store || p.store.archived || !p.store.isActive) {
+    fail(404, 'Product is unavailable.');
+  }
+
+  res.json(p);
 };
 
+function fields(body) {
+  return {
+    name: text(body.name, 'Product name', 150),
+    description: text(body.description, 'Description'),
+    category: text(body.category, 'Category', 80),
+    price: number(body.price, 'Price'),
+    stock: number(body.stock, 'Stock', true)
+  };
+}
 
+async function ownedStore(id, user) {
+  const store = await Store.findOne({
+    _id: objectId(id, 'store'),
+    owner: user._id,
+    archived: { $ne: true }
+  });
 
+  if (!store) {
+    fail(403, 'You can only manage products in your own stores.');
+  }
 
+  return store;
+}
 
 const create = async (req, res) => {
-    try {
-        const newProduct = await Product.create(req.body);
-        res.status(201).json(newProduct);
-    } catch (error) {
-        res.status(400).json({ error: error.message });
-    }
+  await ownedStore(req.body.store, req.user);
+  
+  const values = fields(req.body);
+  const image = await uploadImage(req.file);
+
+  try {
+    const product = await Product.create({
+      ...values,
+      ...image,
+      store: req.body.store
+    });
+    
+    const populatedProduct = await product.populate('store');
+    res.status(201).json(populatedProduct);
+  } catch (e) {
+    await discardImage(image);
+    throw e;
+  }
 };
-
-
-
-
 
 const update = async (req, res) => {
-    try {
-        const updatedProduct = await Product.findByIdAndUpdate(
-            req.params.id, 
-            req.body, 
-            { new: true, runValidators: true }
-        );
-        if (!updatedProduct) {
-            return res.status(404).json({ message: 'Product not found for update' });
-        }
-        res.status(200).json(updatedProduct);
-    } catch (error) {
-        res.status(400).json({ error: error.message });
+  const p = await Product.findOne({
+    _id: objectId(req.params.id),
+    archived: { $ne: true }
+  });
+
+  if (!p) {
+    fail(404, 'Product not found.');
+  }
+
+  await ownedStore(String(p.store), req.user);
+
+  if (
+    !Number.isSafeInteger(req.body.version) &&
+    !(typeof req.body.version === 'string' && /^\d+$/.test(req.body.version))
+  ) {
+    fail(400, 'Product version is required. Refresh and try again.');
+  }
+
+  const values = fields(req.body);
+  const image = await uploadImage(req.file);
+
+  try {
+    const updated = await Product.findOneAndUpdate(
+      {
+        _id: p._id,
+        __v: Number(req.body.version),
+        archived: { $ne: true }
+      },
+      {
+        $set: { ...values, ...image },
+        $inc: { __v: 1 }
+      },
+      { returnDocument: 'after', runValidators: true }
+    ).populate('store');
+
+    if (!updated) {
+      fail(409, 'This product changed while you were editing. Refresh to use its latest stock.');
     }
+
+    res.json(updated);
+  } catch (e) {
+    await discardImage(image);
+    throw e;
+  }
 };
-
-
-
 
 const destroy = async (req, res) => {
-    try {
-        const deletedProduct = await Product.findByIdAndDelete(req.params.id);
-        if (!deletedProduct) {
-            return res.status(404).json({ message: 'Product not found for deletion' });
-        }
-        res.status(200).json({ message: 'Product deleted successfully' });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
+  const p = await Product.findById(objectId(req.params.id));
+
+  if (!p) {
+    fail(404, 'Product not found.');
+  }
+
+  await ownedStore(String(p.store), req.user);
+
+  await Product.updateOne(
+    { _id: p._id },
+    { 
+      $set: { archived: true }, 
+      $inc: { __v: 1 } 
     }
+  );
+
+  res.json({ message: 'Product removed from the catalog. Existing order records are preserved.' });
 };
 
-
-
-
 module.exports = {
-    index,
-    show,
-    create,
-    update,
-    destroy
+  index,
+  mine,
+  show,
+  create,
+  update,
+  destroy
 };

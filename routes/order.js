@@ -1,17 +1,14 @@
-const express = require('express');
-const router = express.Router();
-const orderCtrl = require('../controllers/orderCtrl');
-const isSignedIn = require('../middleware/isSignedIn');
-const isSeller = require('../middleware/isSeller');
+const router = require('express').Router();
+const ctrl = require('../controllers/orderCtrl');
 
+router.use(require('../middleware/isSignedIn'));
 
-router.use(isSignedIn);
-
-router.post('/', orderCtrl.create);
-router.get('/', orderCtrl.index);
-router.get('/:id', orderCtrl.show);
-router.put('/:id', orderCtrl.update);
-router.delete('/:id', orderCtrl.destroy);
-
+router.post('/', ctrl.create);
+router.get('/', ctrl.index);
+router.get('/mine', ctrl.index);
+router.get('/store/:storeId', require('../middleware/isSeller'), ctrl.byStore);
+router.get('/:id', ctrl.show);
+router.put('/:id', ctrl.update);
+router.delete('/:id', ctrl.destroy);
 
 module.exports = router;

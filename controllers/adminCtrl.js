@@ -12,7 +12,7 @@ const getDashboardStats = async (req, res) => {
     const totalOrders = await Order.countDocuments();
 
     const orders = await Order.find();
-    const totalRevenue = orders.reduce((sum, order) => sum + (order.totalAmount || order.totalPrice || 0), 0);
+    const totalRevenue = orders.filter(order => order.status !== 'cancelled').reduce((sum, order) => sum + (order.totalAmount ?? order.totalPrice ?? 0), 0);
 
     res.status(200).json({
       success: true,
@@ -44,13 +44,14 @@ const getAllUsers = async (req, res) => {
 
 const deleteUser = async (req, res) => {
   try {
-    const user = await User.findByIdAndDelete(req.params.id);
+    if (String(req.user._id) === req.params.id) return res.status(400).json({ error: 'You cannot deactivate your own administrator account.' });
+    const user = await User.findByIdAndUpdate(req.params.id, { isActive: false }, { returnDocument: 'after' });
 
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    res.status(200).json({ success: true, message: 'User deleted successfully' });
+    res.status(200).json({ success: true, message: 'User deactivated successfully' });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -71,13 +72,13 @@ const getAllStores = async (req, res) => {
 
 const deleteStore = async (req, res) => {
   try {
-    const store = await Store.findByIdAndDelete(req.params.id);
+    const store = await Store.findByIdAndUpdate(req.params.id, { isActive: false, archived: true }, { returnDocument: 'after' });
 
     if (!store) {
       return res.status(404).json({ success: false, message: 'Store not found' });
     }
 
-    res.status(200).json({ success: true, message: 'Store deleted successfully' });
+    res.status(200).json({ success: true, message: 'Store deactivated successfully' });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -87,8 +88,8 @@ const deleteStore = async (req, res) => {
 const getAllSales = async (req, res) => {
   try {
     const sales = await Order.find()
-      .populate('user', 'username email')
-      .populate('items.product', 'title price');
+      .populate('user', 'username email phoneNumber')
+      .populate('items.product', 'name price');
       
     res.status(200).json({ success: true, count: sales.length, sales });
   } catch (error) {
@@ -101,8 +102,8 @@ const getAllSales = async (req, res) => {
 const getSaleById = async (req, res) => {
   try {
     const sale = await Order.findById(req.params.id)
-      .populate('user', 'username email')
-      .populate('items.product', 'title price');
+      .populate('user', 'username email phoneNumber')
+      .populate('items.product', 'name price');
 
     if (!sale) {
       return res.status(404).json({ success: false, message: 'Sale/Order not found' });

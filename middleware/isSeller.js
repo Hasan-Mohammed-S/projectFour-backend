@@ -1,10 +1,7 @@
-const isSeller = (req, res, next) => {
-
-  if (req.user && (req.user.role === 'seller' || req.user.role === 'admin')) {
+module.exports = (req, res, next) => {
+  if (req.user?.role === 'seller') {
     return next();
   }
-  return res.status(403).json({ message: 'Access denied: Seller rights required.' });
   
+  res.status(403).json({ error: 'A seller account is required.' });
 };
-
-module.exports = isSeller;

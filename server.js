@@ -1,54 +1,91 @@
+require('dotenv').config({ quiet: true });
+
 const express = require('express');
-const mongoose = require('mongoose');
 const cors = require('cors');
+const helmet = require('helmet');
 const morgan = require('morgan');
+
 const app = express();
 
-require('dotenv').config();
+app.disable('x-powered-by');
+app.use(helmet());
 
-require('./config/database');
+const origins = (process.env.FRONTEND_URL || 'http://localhost:5173')
+  .split(',')
+  .map(s => s.trim());
 
-const authRoutes = require('./routes/auth');
-const authRouter = require('./routes/authRouter');
-const productRoutes = require('./routes/product');
-const storeRoutes = require('./routes/stores');
-const orderRoutes = require('./routes/order');
-const adminRoutes = require('./routes/admin');
+app.use(cors({
+  origin: origins,
+  allowedHeaders: ['Content-Type', 'Authorization', 'Idempotency-Key']
+}));
 
-app.use(morgan('dev'));
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+if (process.env.NODE_ENV !== 'test') {
+  app.use(morgan('tiny'));
+}
 
+app.use(express.json({ limit: '100kb' }));
+app.use(express.urlencoded({ extended: false, limit: '100kb' }));
 
-
-app.use('/auth', authRoutes);
-// app.use('/authRouter', authRouter);
-app.use('/products', productRoutes);
-app.use('/stores', storeRoutes);
-app.use('/orders', orderRoutes);
-app.use('/admin', adminRoutes);
-
-
+app.use('/auth', require('./routes/auth'));
+app.use('/products', require('./routes/product'));
+app.use('/stores', require('./routes/stores'));
+app.use('/orders', require('./routes/order'));
+app.use('/admin', require('./routes/admin'));
 
 app.get('/', (req, res) => {
-  res.json({ message: 'Server is running successfully!' });
+  res.json({ message: 'Marketplace API is running.' });
 });
 
-app.get('/protected', (req, res) => {
-  try {
-    const userPayload = req.user;
+app.get('/protected', require('./middleware/isSignedIn'), (req, res) => {
+  res.json({ user: req.user });
+});
 
-    res.status(200).json({ user: userPayload });
-  } catch (error) {
-    res.status(500).json({ err: 'Something went wrong' });
+app.use((req, res) => {
+  res.status(404).json({ error: 'Route not found.' });
+});
+
+app.use(require('./middleware/errorHandler'));
+
+async function start() {
+  if (
+    !process.env.JWT_SECRET ||
+    process.env.JWT_SECRET.length < 32 ||
+    process.env.JWT_SECRET.startsWith('replace_')
+  ) {
+    throw new Error('Set JWT_SECRET to at least 32 random characters.');
   }
-});
 
+  await require('./config/database')();
 
+  const server = app.listen(process.env.PORT || 3000, () => {
+    console.log('API ready.');
+  });
 
+  for (const signal of ['SIGINT', 'SIGTERM']) {
+    process.on(signal, () => {
+      server.close(async () => {
+        await require('mongoose').disconnect();
+        process.exit(0);
+      });
+    });
+  }
+}
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+if (require.main === module) {
+  start().catch((error) => {
+    const message = String(error.message).replace(
+      /mongodb(?:\+srv)?:\/\/\S+/gi,
+      '[MongoDB URI redacted]'
+    );
+
+    console.error('Startup failed:', {
+      name: error.name,
+      code: error.code,
+      message,
+    });
+
+    process.exitCode = 1;
+  });
+}
+
+module.exports = app;

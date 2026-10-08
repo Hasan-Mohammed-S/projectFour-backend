@@ -2,41 +2,51 @@ const mongoose = require('mongoose');
 
 const storeSchema = new mongoose.Schema(
   {
-    name: {
-      type: String,
-      required: [true, 'Store name is required'],
-      trim: true,
-      unique: true
+    name: { 
+      type: String, 
+      required: true, 
+      unique: true, 
+      trim: true, 
+      maxlength: 150 
     },
-    description: {
-      type: String,
-      required: [true, 'Store description is required'],
-      trim: true
+    description: { 
+      type: String, 
+      required: true, 
+      trim: true, 
+      maxlength: 3000 
     },
-    image: {
-      type: String,
-      required: false
+    image: { 
+      type: String, 
+      default: '' 
     },
-    address: {
-      type: String,
-      required: [true, 'Store address is required'],
-      trim: true
+    imagePublicId: { 
+      type: String, 
+      default: '' 
     },
-    owner: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: true
+    address: { 
+      type: String, 
+      required: true, 
+      trim: true, 
+      maxlength: 500 
     },
-    isActive: {
-      type: Boolean,
-      default: true
-    }
-  },
-  {
-    timestamps: true
-    }
+    owner: { 
+      type: mongoose.Schema.Types.ObjectId, 
+      ref: 'User', 
+      required: true 
+    },
+    isActive: { 
+      type: Boolean, 
+      default: true 
+    },
+    archived: { 
+      type: Boolean, 
+      default: false 
+    },
+    lastOrderAt: Date
+  }, 
+  { timestamps: true }
 );
 
-const Store = mongoose.model('Store', storeSchema);
+storeSchema.index({ owner: 1 });
 
-module.exports = Store;
+module.exports = mongoose.model('Store', storeSchema);

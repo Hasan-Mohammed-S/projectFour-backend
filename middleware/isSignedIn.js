@@ -1,21 +1,35 @@
 const jwt = require('jsonwebtoken');
+const User = require('../models/user');
 
-const isSignedIn = (req, res, next) => {
+module.exports = async (req, res, next) => {
+  const header = req.headers.authorization || '';
+
+  if (!/^Bearer \S+$/.test(header)) {
+    return res.status(401).json({ error: 'Please sign in to continue.' });
+  }
+
+  let payload;
+
   try {
-    const brearerToken = req.headers.authorization;
+    payload = jwt.verify(
+      header.slice(7), 
+      process.env.JWT_SECRET, 
+      { algorithms: ['HS256'], maxAge: '8h' }
+    );
+  } catch {
+    return res.status(401).json({ error: 'Your session has expired. Please sign in again.' });
+  }
 
-    if (!brearerToken) throw new Error('Login Required');
+  try {
+    const user = await User.findById(payload._id);
 
-    const token = brearerToken.split(' ')[1];
+    if (!user || user.isActive === false) {
+      return res.status(401).json({ error: 'This account is no longer active.' });
+    }
 
-    const payload = jwt.verify(token, process.env.JWT_SECRET);
-
-    req.user = payload;
-
+    req.user = user;
     next();
-  } catch (err) {
-    res.status(401).json({ err: 'Login Required' });
+  } catch (error) {
+    next(error);
   }
 };
-
-module.exports = isSignedIn;

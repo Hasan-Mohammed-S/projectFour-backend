@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+router.use(require('../middleware/isSignedIn'), require('../middleware/isAdmin')); 
 
 const {
   getDashboardStats,
