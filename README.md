@@ -1,12 +1,155 @@
+# Handmade Market — Backend
 
-#  I haven't chosen a name yet
+Express API for a marketplace of independent handmade-product stores. Provides authentication, store/product management, Cloudinary images, transactional checkout, stock updates, order history, and seller fulfillment tracking.
+
+## Technology
+
+- Node.js and Express 5 with CommonJS modules.
+- MongoDB and Mongoose 9.
+- JWT authentication and bcrypt password hashing.
+- Cloudinary SDK, Multer, Helmet, CORS, and authentication rate limiting.
+- Node's built-in test runner and `mongodb-memory-server`.
+
+## Requirements
+
+- Node.js **22.12 or later** and npm.
+- MongoDB Atlas or a local MongoDB **replica set**. Standalone MongoDB cannot support checkout transactions.
+- A Cloudinary account for real image uploads.
+- The accompanying frontend, normally at `http://localhost:5173`.
+
+## Local setup
+
+Run commands from `BackEnd/BackEnd/` in the supplied project, or the directory containing the backend's `package.json` if cloned separately.
+
+1. Install locked dependencies:
+
+   ```bash
+   npm ci
+   ```
+
+2. Copy `.env.example` to `.env` in this directory. In Bash or Git Bash:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+   Alternatively, copy and rename it through your editor or file manager.
+
+3. Configure `.env` with your own credentials:
+
+   ```env
+   PORT=3000
+   MONGODB_URI=mongodb+srv://<username>:<password>@<cluster-host>/handmade_market?retryWrites=true&w=majority
+   JWT_SECRET=replace_with_your_generated_secret
+   FRONTEND_URL=http://localhost:5173
+   CLOUDINARY_CLOUD_NAME=your_cloud_name
+   CLOUDINARY_API_KEY=your_api_key
+   CLOUDINARY_API_SECRET=your_api_secret
+   ```
+
+   All credential values above are placeholders. Copy your Atlas connection string and explicitly select `handmade_market`. Retain the connection options supplied by Atlas. For a standard URI ending in `:27017/?ssl=true&...`, change that portion to `:27017/handmade_market?ssl=true&...`.
+
+4. Generate a random signing secret and paste the output into `JWT_SECRET`:
+
+   ```bash
+   node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
+   ```
+
+5. Start the backend:
+
+   ```bash
+   npm run dev
+   ```
+
+   Successful startup prints:
+
+   ```text
+   Database connected.
+   API ready.
+   ```
+
+6. Open `http://localhost:3000/`. The response is:
+
+   ```json
+   { "message": "Marketplace API is running." }
+   ```
+
+This confirms an HTTP response; the root endpoint is not a continuous database health check. Start the frontend separately.
+
+## Environment variables
+
+| Variable | Purpose |
+| --- | --- |
+| `PORT` | HTTP port; defaults to `3000`. |
+| `MONGODB_URI` | Required connection string with explicit database name and replica-set support. |
+| `JWT_SECRET` | At least 32 characters; placeholders starting with `replace_` are rejected. |
+| `FRONTEND_URL` | Allowed frontend origin; defaults to `http://localhost:5173`. Multiple origins may be comma-separated. |
+| `CLOUDINARY_CLOUD_NAME` | Cloudinary cloud name; required for image uploads. |
+| `CLOUDINARY_API_KEY` | Cloudinary API key; backend only. |
+| `CLOUDINARY_API_SECRET` | Cloudinary API secret; backend only. |
+| `NODE_ENV` | Set to `production` in production; tests set their own environment. |
+
+`SESSION_SECRET`, `SECRET_NUMBER`, and `PASSWORD` are not used by the current authentication flow. Restart after changing environment variables. Do not commit `.env` or place secrets in frontend code.
+
+## Database setup and existing data
+
+Use a dedicated database such as `handmade_market`, rather than sharing `test.users` with unrelated projects. Model initialization creates collections and indexes before accepting requests. A fresh database contains no accounts, stores, or products; create them through the application.
+
+Selecting a new database does not delete or migrate the old one. Existing application data requires a deliberate migration that preserves document IDs and relationships.
+
+An `E11000` startup error means existing records violate a unique index. Multiple legacy users missing `phoneNumber`, for example, conflict with its unique index. Select the correct dedicated database or review and correct existing application records. Do not remove uniqueness checks to bypass invalid data.
+
+For Atlas, configure a database user with access to the selected database and allow the backend host through Atlas network access. URL-encode special characters in connection-string credentials.
+
+## Commands
+
+| Command | Purpose |
+| --- | --- |
+| `npm ci` | Install locked dependencies. |
+| `npm run dev` | Start with Nodemon. |
+| `npm start` | Start with Node. |
+| `npm test` | Run integration tests. |
+
+## Folder structure
+
+| Location | Responsibility |
+| --- | --- |
+| `server.js` | Environment, middleware, routing, startup, and shutdown. |
+| `config/` | MongoDB, Cloudinary, and Multer configuration. |
+| `models/` | User, Store, Product, and Order schemas and indexes. |
+| `routes/` | Authentication, store, product, order, and administrator endpoints. |
+| `controllers/` | HTTP request handling and scoped data access. |
+| `middleware/` | Authentication, seller/admin guards, and centralized errors. |
+| `services/` | Validation, image uploads/cleanup, and transactional checkout. |
+| `tests/` | Integration tests and the synthetic browser-test API. |
+
+## Models and relationships
+
+| Model | Main data and relationships |
+| --- | --- |
+| User | Unique username, phone, email; hashed password; buyer/seller/admin role; active flag. |
+| Store | Unique name, description, address, image URL/public ID; owner references User; active/archive flags. |
+| Product | Name, description, category, price, integer stock, image URL/public ID; store references Store; archive flag and version. |
+| Order | Buyer and store references; item product references; customer/store/product/price/image snapshots; total, address, status history, checkout key, and timestamps. |
+
+Order snapshots preserve purchase details when catalog information changes. Product/store removal archives records; administrator user removal deactivates the account. Order deletion is rejected.
+
+## Authentication and authorization
+
+Public registration accepts `buyer` or `seller`; administrator registration is not exposed. Login accepts username, email, or phone number. JWTs expire after eight hours and are verified using HS256. Each authenticated request loads the current database user and rejects missing/deactivated accounts.
+
+Protected requests use:
+
+```http
+Authorization: Bearer <token>
+```
+
+Passwords are hashed with bcrypt and excluded from serialized account responses. Signup and login are rate-limited. Sellers manage only owned stores/products and see only their stores' orders. Buyers see only their own orders. Only buyers can checkout; sellers cannot purchase products.
+
+Logout acknowledges sign-out and the client removes its token. There is no server-side token revocation list; an otherwise valid token remains valid until expiry or account deactivation.
 
 
-The platform (I haven't chosen a name yet) brings together shops that sell handmade items—such as wedding favors, *Nasfa* treats, gifts for welcoming newborns, artwork, and other handcrafted goods—making it easier for buyers to find them without having to spend a long time searching on social media.
-
-
-
-## 1.user stories
+## user stories
 
 ### Visitors
 
@@ -53,68 +196,127 @@ The platform (I haven't chosen a name yet) brings together shops that sell handm
 | A02 | As an admin, I would like to review the details regarding the number of users—specifically the number of stores and buyers—and view their data. |
 | A03 | As an admin, I would like to remove stores that have recurring complaints, or buyers with recurring complaints, from the Owner Stores.           |
 
-
-
-
 ## Entity relationship diagrams (ERDs)
 
 ![Current collection relationships](imgs/ERD.png)
 
+## API routes
 
+The base URL is normally `http://localhost:3000`; there is no `/api` prefix. Responses are JSON. Errors use `{ "error": "message" }`.
 
+| Method | Path | Access / behavior |
+| --- | --- | --- |
+| GET | `/` | Public API response. |
+| POST | `/auth/signup`, `/auth/sign-up` | Register buyer/seller. |
+| POST | `/auth/login`, `/auth/sign-in` | Login; returns user and token. |
+| GET | `/auth/me` | Current authenticated account. |
+| PUT | `/auth/me` | Update username, email, and phone. |
+| POST | `/auth/logout` | Authenticated sign-out response. |
+| GET | `/protected` | Authenticated account wrapped as `{ user }`. |
+| GET | `/stores` | Active, non-archived public stores. |
+| GET | `/stores/mine` | Seller's non-archived stores. |
+| GET | `/stores/:id` | Active public store details. |
+| POST | `/stores` | Seller creates store; owner assigned from authentication. |
+| PUT | `/stores/:id` | Owning seller edits store. |
+| DELETE | `/stores/:id` | Owner archives store after its products are archived. |
+| GET | `/products`, `/products?store=:id` | Public catalog or store-filtered catalog. |
+| GET | `/products/mine` | Seller's non-archived products. |
+| GET | `/products/:id` | Public details; out-of-stock products remain viewable. |
+| POST | `/products` | Seller creates product in owned store. |
+| PUT | `/products/:id` | Owner edits product; current version required. |
+| DELETE | `/products/:id` | Owner archives product. |
+| POST | `/orders` | Buyer checkout with `Idempotency-Key` header. |
+| GET | `/orders`, `/orders/mine` | Buyer/seller-scoped orders; administrators may view all. |
+| GET | `/orders/store/:storeId` | Owning seller's store orders. |
+| GET | `/orders/:id` | Order details within the user's access scope. |
+| PUT | `/orders/:id` | Owning seller advances status. |
+| DELETE | `/orders/:id` | Authenticated request rejected with 405; records retained. |
+| GET | `/admin/stats`, `/admin/users`, `/admin/stores` | Administrator statistics/lists. |
+| GET | `/admin/sales`, `/admin/sales/:id` | Administrator order/sales data. |
+| DELETE | `/admin/users/:id`, `/admin/stores/:id` | Administrator deactivation; records retained. |
 
-## Routes
+Registration fields: `username`, `phoneNumber`, `email`, `password`, and optional `role` (default `buyer`). Passwords require at least eight characters and at most 72 bytes. Login accepts `identifier` and `password`.
 
-### Accounts and stores
+## Checkout and stock integrity
 
+Example request body; replace ID placeholders with MongoDB document IDs:
 
+```json
+{
+  "store": "<store-id>",
+  "shippingAddress": "Building, road, block, and delivery details",
+  "items": [{ "product": "<product-id>", "quantity": 3 }]
+}
+```
 
-| Method    | Path                        | Purpose                                                                    |
-| --------- | --------------------------- | -------------------------------------------------------------------------- |
-| POST      | `/auth/sign-up`             | Create a Buyer or Seller account                   |
-| POST      | `/auth/sign-in`             | Sign in with username, password, and selected role; return user and token. |
-| GET / PUT | `/auth/me`                  | Read the current account or update personal details.                       |
-| GET       | `/stores`                   | List publicly available stores.                                            |
-| GET       | `/stores/mine`              | Read the current seller's store, or `null` before setup.                    |
-| GET       | `/stores/:id`               | Read an approved store and its products.                                   |
-| POST      | `/stores`                   | Create a new store for the seller.                                         |
-| PUT       | `/stores/:id`               | Save store changes and return to Pending status.                           |
-| PUT       | `/stores/:id/review`        | Admin decision with `status` and `reviewReason`.                           |
-| DELETE    | `/stores/:id`               | Delete the owned store only when it has no products.                       |
+Send these headers:
 
+```http
+Content-Type: application/json
+Authorization: Bearer <buyer-token>
+Idempotency-Key: <unique-checkout-key>
+```
 
-### Products and orders
+The checkout key must contain 16–100 letters, numbers, underscores, or hyphens. Use one key per checkout attempt and reuse it when retrying that same request. Reusing a key with different contents returns 409.
 
+Checkout verifies buyer identity, store availability, product membership, requested quantities, stock, and prices. Prices/totals come from MongoDB. Conditional stock decrements and order creation occur in one transaction; failures roll back stock changes, and stock cannot become negative. Replaying a successful checkout returns the existing order without decrementing again.
 
-| Method    | Path                                | Purpose                                                                    |
-| --------- | ----------------------------------- | -------------------------------------------------------------------------- |
-| GET/POST  | `/productsp`                        |Public approved list of products / or create a seller draft product.        |
-| GET       | `/products/mine, /products/mine/:id`| Seller list and private product detail.                                    |
-| GET       | `/products/review, /products/review/:id`| Admin list and private product detail.                                 |
-| GET       | `/products/purchases`               | Current buyer's purchase history.                                          |
-| GET       | `/products/favorites`               | Current buyer's favorites; hidden products return an unavailable entry.    |
-| GET/ PUT / DELETE| `/products/:id`              | Public detail / owner edit / delete an unused unpublished product.         |
-| POST      | `/products/:id/submit`              | Submit a draft or rejected product for review.                             |
-| POST      | `/products/:id/cancel`              | Cancel a published product.                                                |
-| POST      | `/products/:id/complete`            | Complete a fulfilled product order with sales record.                      |
-| PUT       | `/products/:id/review`              | Admin decision with `status` and `reviewReason`.                           |
-| GET/POST  | `/products/:id/orders`              |PStore orders / place a new purchase order for the product.                 |
-| DELETE    | `//products/:id/orders/me`          |Cancel the current buyer's purchase order.                                  |
-| PUT       | `/products/:id/orders/:buyerId`     |Update order or fulfillment status.                                         |
-| PUT / DELETE| `/products/:id/favorite`          |Save / remove a product favorite.                                           |
-| POST      | `/uploads`                          |Seller image upload as multipart field `image`; returns `{ url, publicId }`.    |
+New orders return 201; successful replays return 200. Checkout is per store; the frontend clears only that store's purchased cart items. Adding to a cart never decrements backend stock.
 
+## Order lifecycle
 
+New orders start at `preparing`. The owning seller updates status with `PUT /orders/:id`:
 
+```json
+{ "status": "ready" }
+```
 
+Supported progression: **`preparing` → `ready` → `completed`**. The frontend labels `ready` as **Ready / On the Way**. Updates persist timestamped status history. Completed orders cannot move backward.
 
-### Store updates
+Legacy `pending`, `processing`, and `cancelled` values remain for compatibility. There is no new cancellation/refund workflow.
 
+## Product editing and images
 
-| Method    | Path                           | Purpose                                                                       |
-| --------- | ------------------------------ | ----------------------------------------------------------------------------- |
-| GET       | `/stores/:id/updates`          | Public newest-first updates when store and owner are Approved.                |
-| GET       | `/stores/mine/:id/updates`     | Owning seller's updates in every store status.                                |
-| POST      | `/stores/:id/updates`          | Owner creates an update with `{ text }`; ownership IDs come from the server.  |
-| PUT       | `/stores/:id/updates/:updateId`| Owning author edits an update's text.                                         |
-| DELETE    | `/stores/:id/updates/:updateId`| Owning author removes an update.                                              |
+Store fields: `name`, `description`, `address`. Product fields: `name`, `description`, `category`, `price`, `stock`, and `store` on creation. Product edits require `version` equal to the current product's `__v`; a stale version returns 409 instead of overwriting intervening stock changes.
+
+Store/product creation and editing accept multipart form data with optional file field **`image`**. Files must be JPG, PNG, or WebP, no larger than **5 MB**. MIME types and file signatures are checked before uploading to Cloudinary's `handmade-market` folder.
+
+The returned secure URL is stored as `image`, and the asset ID as `imagePublicId`. Failed record saves clean up the newly uploaded image. Previous image assets are retained when replaced because historical orders may reference them.
+
+Saving without an image works when Cloudinary is unconfigured; uploading then returns a configuration error. The frontend provides a local image fallback.
+
+## Tests
+
+From the backend directory:
+
+```bash
+npm test
+```
+
+Tests create a temporary MongoDB replica set with synthetic data and shut it down afterwards. The first run may need network access to download the MongoDB test binary. Coverage includes authentication/authorization, saved orders, backend pricing, stock rollback/concurrency, duplicate checkout requests, seller isolation, status changes, image validation, and product-edit conflicts.
+
+Tests do not use your Atlas database. Cloudinary is mocked, so live credentials/uploads need a separate manual check. For browser workflows, install frontend dependencies and run its Playwright tests with ports 3000 and 5173 free.
+
+## Production deployment
+
+Install runtime dependencies with `npm ci --omit=dev`, supply secrets through the hosting environment, set `NODE_ENV=production`, and run `npm start`. Configure HTTPS, the deployed frontend origin, Atlas network access, and Cloudinary credentials.
+
+The API connects to MongoDB and initializes indexes before listening. SIGINT/SIGTERM close the HTTP server and database connection. Review existing data/indexes before selecting an existing database. Configure the frontend's deployed API URL before building it.
+
+## Troubleshooting
+
+| Issue | Action |
+| --- | --- |
+| Startup fails before connecting | Check JWT secret length and reject placeholder values. |
+| MongoDB connection fails | Check URI, credentials, permissions, Atlas network access, and connectivity. |
+| `E11000` during startup | Review unique-field duplicates/missing values and the selected database. |
+| Checkout transaction error | Use Atlas or a configured replica set rather than standalone MongoDB. |
+| CORS errors | Set `FRONTEND_URL` to the exact frontend origin and restart. |
+| Image upload fails | Check all three Cloudinary variables, type/size, and connectivity. |
+| Product edit returns 409 | Reload the product and submit its latest stock and `__v`. |
+| Login fails after database switch | Register accounts in the new database; migration is not automatic. |
+| Port 3000 occupied | Stop the other process or change `PORT` and frontend API URL together. |
+
+## Scope
+
+The API manages orders and fulfillment; payments, refunds, tax/delivery fees, and email/SMS notifications are not implemented. Prices use the application's existing USD convention. Live Atlas data, real Cloudinary uploads, and hosting must be validated in the target deployment environment.
